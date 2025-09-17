@@ -5,7 +5,7 @@ pipeline {
         DEPLOY_USER = 'ubuntu'
         DEPLOY_HOST = '65.1.194.177'
         DEPLOY_DIR  = '/var/www/html/'
-        SSH_KEY     = '/var/lib/jenkins/.ssh/id_ed25519' // path to Jenkins SSH key
+        SSH_KEY     = '/var/lib/jenkins/.ssh/shivam.pub' // path to Jenkins SSH key
     }
 
     stages {

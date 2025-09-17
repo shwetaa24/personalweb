@@ -24,11 +24,13 @@ pipeline {
        stage('Deploy') {
     steps {
         echo 'Deploying website...'
-        // Replace with your server details
-        sh 'scp -r * ubuntu@65.1.194.177:/var/www/html/'
-    
-            }
-        }
+        // Using SSH to copy files to web server
+        sh '''
+            scp -o StrictHostKeyChecking=no -r Jenkinsfile index.html script.js style.css ubuntu@65.1.194.177:/var/www/html/
+        '''
+    }
+}
+
     }
 
     post {

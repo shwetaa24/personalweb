@@ -4,43 +4,38 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/shwetaa24/jenkinssetup.git'
+                echo 'Checking out repository...'
+                git branch: 'master', url: 'https://github.com/shwetaa24/personalweb.git'
             }
         }
 
         stage('Build') {
-            parallel {
-                stage('Build Frontend') {
-                    steps {
-                        sh '''
-                            cd frontend
-                            npm install
-                            npm run build
-                        '''
-                    }
-                }
-                stage('Build Backend') {
-                    steps {
-                        sh '''
-                            cd backend
-                            chmod +x gradlew
-                            ./gradlew build
-                        '''
-                    }
-                }
+            steps {
+                echo 'No build required for static website'
             }
         }
 
         stage('Test') {
             steps {
-                echo 'Running tests...'
+                echo 'No tests defined for this project'
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Deploying application...'
+                echo 'Deploying website...'
+                // Add your deployment commands here
+                // Example: sh 'scp -r * user@server:/var/www/html'
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed.'
         }
     }
 }

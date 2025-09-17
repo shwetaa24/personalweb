@@ -21,11 +21,12 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
-            steps {
-                echo 'Deploying website...'
-                // Add your deployment commands here
-                // Example: sh 'scp -r * user@server:/var/www/html'
+       stage('Deploy') {
+    steps {
+        echo 'Deploying website...'
+        // Replace with your server details
+        sh 'scp -r * ubuntu@65.1.194.177:/var/www/html/'
+    
             }
         }
     }

@@ -10,37 +10,44 @@ pipeline {
 
         stage('Build') {
             steps {
-                // Install Python dependencies without virtual environment
+                // Use Bash and virtual environment
                 sh '''
-                    python3 -m pip install --upgrade pip
-                    python3 -m pip install -r requirements.txt
+                    #!/bin/bash
+                    python3 -m venv venv
+                    source venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
                 '''
             }
         }
 
         stage('Test') {
             steps {
-                // Run tests directly
-                sh 'python3 -m pytest tests/'
+                sh '''
+                    #!/bin/bash
+                    source venv/bin/activate
+                    pytest tests/
+                '''
             }
         }
 
         stage('Deploy') {
             steps {
-                // Simple deployment: copy files to staging folder
-                sh 'cp -r * /var/www/html/'
+                sh '''
+                    #!/bin/bash
+                    source venv/bin/activate
+                    cp -r * /var/www/html/
+                '''
             }
         }
     }
 
     post {
         success {
-            echo '✅ Build, Test, and Deploy succeeded!'
-            // Optional: add Slack/email notifications here
+            echo '✅ Build, Test, Deploy succeeded!'
         }
         failure {
             echo '❌ Build failed!'
-            // Optional: add Slack/email notifications here
         }
     }
 }

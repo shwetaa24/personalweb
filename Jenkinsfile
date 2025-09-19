@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master', url: 'https://github.com/shwetaa24/personalweb.git'
+                git branch: 'main', url: 'https://github.com/shwetaa24/personalweb.git'
             }
         }
 

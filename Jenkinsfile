@@ -4,54 +4,82 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Shivm-ops/devops-portfolio.git'
+                // Checkout main branch
+                git branch: 'main', url: 'https://github.com/shwetaa24/personalweb.git'
             }
         }
 
         stage('Build') {
             steps {
-                script {
-                    if (fileExists('package.json')) {
-                        sh 'npm install'
-                    } else {
-                        echo 'No build required for static files'
-                    }
-                }
+                sh '''
+                    echo "=== Build Stage ==="
+
+                    # Remove existing virtual environment if exists
+                    if [ -d "venv" ]; then
+                        rm -rf venv
+                    fi
+
+                    # Create virtual environment
+                    python3 -m venv venv
+
+                    # Activate virtual environment
+                    source venv/bin/activate
+
+                    # Upgrade pip
+                    pip install --upgrade pip
+
+                    # Install requirements if exists
+                    if [ -f "requirements.txt" ]; then
+                        pip install -r requirements.txt
+                    else
+                        echo "requirements.txt not found, skipping pip install"
+                    fi
+                '''
             }
         }
 
         stage('Test') {
             steps {
-                script {
-                    if (fileExists('package.json')) {
-                        sh 'npm test || exit 1'
-                    } else {
-                        echo 'No tests defined'
-                    }
-                }
+                sh '''
+                    echo "=== Test Stage ==="
+
+                    # Activate virtual environment
+                    source venv/bin/activate
+
+                    # Run tests only if pytest is installed
+                    if command -v pytest &>/dev/null; then
+                        pytest
+                    else
+                        echo "pytest not installed, skipping tests"
+                    fi
+                '''
             }
         }
 
         stage('Deploy') {
-    steps {
-        script {
-            // Clear old files
-            sh 'rm -rf /var/www/html/myapp/*'
-            // Copy new files
-            sh 'cp -r * /var/www/html/myapp/'
-            echo 'Deployment complete!'
-        }
-    }
-}
+            steps {
+                sh '''
+                    echo "=== Deploy Stage ==="
 
+                    # Create deployment folder if it doesn't exist
+                    mkdir -p /var/www/html/myapp
+
+                    # Remove old files
+                    rm -rf /var/www/html/myapp/*
+
+                    # Copy project files to deployment folder
+                    cp -r Jenkinsfile README.md about.html chatbot contact.html css index.html js projects.html venv /var/www/html/myapp/
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo "✅ Build & Deploy Successful!"
+            echo '✅ Build, Test, Deploy succeeded on Linux!'
         }
         failure {
-            echo "❌ Build Failed! Check logs."
+            echo '❌ Build Failed! Check logs.'
         }
     }
 }

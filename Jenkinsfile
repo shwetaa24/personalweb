@@ -4,36 +4,30 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Checkout main branch
                 git branch: 'main', url: 'https://github.com/shwetaa24/personalweb.git'
             }
         }
 
         stage('Build') {
             steps {
+                // Use bash explicitly
                 sh '''
                     echo "=== Build Stage ==="
 
                     # Remove existing virtual environment if exists
-                    if [ -d "venv" ]; then
-                        rm -rf venv
-                    fi
+                    [ -d "venv" ] && rm -rf venv
 
                     # Create virtual environment
                     python3 -m venv venv
 
-                    # Activate virtual environment
-                    source venv/bin/activate
+                    # Activate virtual environment using bash-compatible syntax
+                    . venv/bin/activate
 
                     # Upgrade pip
                     pip install --upgrade pip
 
                     # Install requirements if exists
-                    if [ -f "requirements.txt" ]; then
-                        pip install -r requirements.txt
-                    else
-                        echo "requirements.txt not found, skipping pip install"
-                    fi
+                    [ -f "requirements.txt" ] && pip install -r requirements.txt || echo "requirements.txt not found"
                 '''
             }
         }
@@ -42,16 +36,10 @@ pipeline {
             steps {
                 sh '''
                     echo "=== Test Stage ==="
-
-                    # Activate virtual environment
-                    source venv/bin/activate
+                    . venv/bin/activate
 
                     # Run tests only if pytest is installed
-                    if command -v pytest &>/dev/null; then
-                        pytest
-                    else
-                        echo "pytest not installed, skipping tests"
-                    fi
+                    command -v pytest >/dev/null 2>&1 && pytest || echo "pytest not installed"
                 '''
             }
         }
@@ -61,14 +49,14 @@ pipeline {
                 sh '''
                     echo "=== Deploy Stage ==="
 
-                    # Create deployment folder if it doesn't exist
+                    # Create deployment folder if missing
                     mkdir -p /var/www/html/myapp
 
                     # Remove old files
                     rm -rf /var/www/html/myapp/*
 
-                    # Copy project files to deployment folder
-                    cp -r Jenkinsfile README.md about.html chatbot contact.html css index.html js projects.html venv /var/www/html/myapp/
+                    # Copy project files (excluding venv)
+                    cp -r Jenkinsfile README.md about.html chatbot contact.html css index.html js projects.html /var/www/html/myapp/
                 '''
             }
         }
@@ -76,7 +64,7 @@ pipeline {
 
     post {
         success {
-            echo '✅ Build, Test, Deploy succeeded on Linux!'
+            echo '✅ Build, Test, Deploy succeeded!'
         }
         failure {
             echo '❌ Build Failed! Check logs.'

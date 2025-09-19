@@ -4,80 +4,54 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout([$class: 'GitSCM',
-                    branches: [[name: '*/master']], // or main
-                    userRemoteConfigs: [[url: 'https://github.com/shwetaa24/personalweb.git']]
-                ])
+                git branch: 'main', url: 'https://github.com/Shivm-ops/devops-portfolio.git'
             }
         }
 
         stage('Build') {
             steps {
-                sh '''
-                    echo "=== Build Stage ==="
-
-                    # Remove existing venv
-                    if [ -d "venv" ]; then
-                        rm -rf venv
-                    fi
-
-                    # Create virtual environment
-                    python3 -m venv venv
-                    source venv/bin/activate
-
-                    # Upgrade pip
-                    pip install --upgrade pip
-
-                    # Install requirements
-                    if [ -f requirements.txt ]; then
-                        pip install -r requirements.txt
-                    else
-                        echo "requirements.txt not found, skipping pip install"
-                    fi
-                '''
+                script {
+                    if (fileExists('package.json')) {
+                        sh 'npm install'
+                    } else {
+                        echo 'No build required for static files'
+                    }
+                }
             }
         }
 
         stage('Test') {
             steps {
-                sh '''
-                    echo "=== Test Stage ==="
-                    source venv/bin/activate
-
-                    # Run tests if pytest installed
-                    if command -v pytest > /dev/null; then
-                        pytest
-                    else
-                        echo "pytest not installed, skipping tests"
-                    fi
-                '''
+                script {
+                    if (fileExists('package.json')) {
+                        sh 'npm test || exit 1'
+                    } else {
+                        echo 'No tests defined'
+                    }
+                }
             }
         }
 
         stage('Deploy') {
-            steps {
-                sh '''
-                    echo "=== Deploy Stage ==="
-                    . venv/bin/activate
-
-                    DEPLOY_PATH="/var/www/html"  # example path
-                    if [ -d "$DEPLOY_PATH" ]; then
-                        cp -r * "$DEPLOY_PATH"
-                        echo "Deployment completed!"
-                    else
-                        echo "Deployment folder not found, skipping deploy"
-                    fi
-                '''
-            }
+    steps {
+        script {
+            // Clear old files
+            sh 'rm -rf /var/www/html/myapp/*'
+            // Copy new files
+            sh 'cp -r * /var/www/html/myapp/'
+            echo 'Deployment complete!'
         }
+    }
+}
+
     }
 
     post {
         success {
-            echo '✅ Build, Test, Deploy succeeded on Linux!'
+            echo "✅ Build & Deploy Successful!"
         }
         failure {
-            echo '❌ Build failed on Linux!'
+            echo "❌ Build Failed! Check logs."
         }
     }
 }

@@ -12,18 +12,18 @@ pipeline {
             }
         }
 
-        stage('Build') {
-            steps {
-                // Create virtual environment and install dependencies
-                sh '''
-                    #!/bin/bash
-                    python3 -m venv $VENV_DIR
-                    source $VENV_DIR/bin/activate
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
-                '''
-            }
-        }
+      stage('Build') {
+    steps {
+        sh '''
+            #!/bin/bash
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install --upgrade pip
+            pip install -r requirements.txt
+        '''
+    }
+}
+
 
         stage('Test') {
             steps {

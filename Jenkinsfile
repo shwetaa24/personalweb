@@ -58,7 +58,7 @@ pipeline {
             steps {
                 sh '''
                     echo "=== Deploy Stage ==="
-                    source venv/bin/activate
+                    . venv/bin/activate
 
                     DEPLOY_PATH="/var/www/html"  # example path
                     if [ -d "$DEPLOY_PATH" ]; then

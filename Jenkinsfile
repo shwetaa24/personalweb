@@ -8,43 +8,36 @@ pipeline {
             }
         }
 
-       stage('Build') {
-    steps {
-        sh '''
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install --upgrade pip
-            cd app
-            pip install -r requirements.txt
-        '''
-    }
-}
+        stage('Build') {
+            steps {
+                // Use PowerShell for Windows
+                powershell '''
+                    # Create virtual environment
+                    python -m venv venv
+
+                    # Activate virtual environment
+                    .\\venv\\Scripts\\Activate.ps1
+
+                    # Upgrade pip and install requirements
+                    pip install --upgrade pip
+                    pip install -r .\\requirements.txt
+                '''
+            }
+        }
 
         stage('Test') {
             steps {
-                sh '''
-                    . venv/bin/activate
-                    pytest tests/
+                powershell '''
+                    # Activate virtual environment
+                    .\\venv\\Scripts\\Activate.ps1
+
+                    # Run tests
+                    pytest
                 '''
             }
         }
 
         stage('Deploy') {
             steps {
-                sh '''
-                    . venv/bin/activate
-                    cp -r * /var/www/html/
-                '''
-            }
-        }
-    }
-
-    post {
-        success {
-            echo '✅ Build, Test, Deploy succeeded!'
-        }
-        failure {
-            echo '❌ Build failed!'
-        }
-    }
-}
+                powershell '''
+                    # Activ

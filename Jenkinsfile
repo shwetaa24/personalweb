@@ -13,10 +13,16 @@ pipeline {
                 sh '''
                     echo "=== Build Stage ==="
 
-                    # Install dependencies globally (ensure Python & pip are installed)
+                    # Create a virtual environment in the workspace
+                    python3 -m venv venv
+
+                    # Activate virtual environment
+                    source venv/bin/activate
+
+                    # Upgrade pip and install dependencies if requirements.txt exists
                     if [ -f requirements.txt ]; then
-                        pip3 install --upgrade pip
-                        pip3 install -r requirements.txt
+                        pip install --upgrade pip
+                        pip install -r requirements.txt
                     else
                         echo "requirements.txt not found, skipping dependency install"
                     fi
@@ -28,6 +34,10 @@ pipeline {
             steps {
                 sh '''
                     echo "=== Test Stage ==="
+
+                    # Activate virtual environment
+                    source venv/bin/activate
+
                     if command -v pytest >/dev/null 2>&1; then
                         pytest
                     else
@@ -43,12 +53,11 @@ pipeline {
                     echo "=== Deploy Stage ==="
                     DEPLOY_DIR="/var/www/html/myapp"
 
-                    # Make sure deploy folder exists
-                    if [ ! -d "$DEPLOY_DIR" ]; then
-                        mkdir -p "$DEPLOY_DIR"
-                    fi
+                    # Ensure deploy folder exists with correct permissions
+                    sudo mkdir -p "$DEPLOY_DIR"
+                    sudo chown -R $USER:$USER "$DEPLOY_DIR"
 
-                    # Copy project files
+                    # Copy project files to deploy folder
                     cp -r * "$DEPLOY_DIR/"
                 '''
             }
@@ -56,11 +65,3 @@ pipeline {
     }
 
     post {
-        success {
-            echo '✅ Build, Test, Deploy succeeded on Linux!'
-        }
-        failure {
-            echo '❌ Build Failed! Check logs.'
-        }
-    }
-}

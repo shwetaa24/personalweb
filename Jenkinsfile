@@ -10,11 +10,9 @@ pipeline {
 
         stage('Build') {
             steps {
-                // Use Bash and virtual environment
                 sh '''
-                    #!/bin/bash
                     python3 -m venv venv
-                    source venv/bin/activate
+                    . venv/bin/activate
                     pip install --upgrade pip
                     pip install -r requirements.txt
                 '''
@@ -24,8 +22,7 @@ pipeline {
         stage('Test') {
             steps {
                 sh '''
-                    #!/bin/bash
-                    source venv/bin/activate
+                    . venv/bin/activate
                     pytest tests/
                 '''
             }
@@ -34,8 +31,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
-                    #!/bin/bash
-                    source venv/bin/activate
+                    . venv/bin/activate
                     cp -r * /var/www/html/
                 '''
             }

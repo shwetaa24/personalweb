@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        VENV_DIR = 'venv'
-    }
-
     stages {
         stage('Checkout') {
             steps {
@@ -12,37 +8,27 @@ pipeline {
             }
         }
 
-      stage('Build') {
-    steps {
-        sh '''
-            #!/bin/bash
-            python3 -m venv venv
-            source venv/bin/activate
-            pip install --upgrade pip
-            pip install -r requirements.txt
-        '''
-    }
-}
-
+        stage('Build') {
+            steps {
+                // Install Python dependencies without virtual environment
+                sh '''
+                    python3 -m pip install --upgrade pip
+                    python3 -m pip install -r requirements.txt
+                '''
+            }
+        }
 
         stage('Test') {
             steps {
-                sh '''
-                    # Activate virtual environment
-                    source $VENV_DIR/bin/activate
-                    pytest tests/
-                '''
+                // Run tests directly
+                sh 'python3 -m pytest tests/'
             }
         }
 
         stage('Deploy') {
             steps {
-                sh '''
-                    # Activate virtual environment
-                    source $VENV_DIR/bin/activate
-                    # Simple deployment: copy files to staging folder
-                    cp -r * /var/www/html/
-                '''
+                // Simple deployment: copy files to staging folder
+                sh 'cp -r * /var/www/html/'
             }
         }
     }

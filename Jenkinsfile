@@ -10,24 +10,16 @@ pipeline {
 
         stage('Build') {
             steps {
-                // Use bash explicitly
                 sh '''
                     echo "=== Build Stage ==="
 
-                    # Remove existing virtual environment if exists
-                    [ -d "venv" ] && rm -rf venv
-
-                    # Create virtual environment
-                    python3 -m venv venv
-
-                    # Activate virtual environment using bash-compatible syntax
-                    . venv/bin/activate
-
-                    # Upgrade pip
-                    pip install --upgrade pip
-
-                    # Install requirements if exists
-                    [ -f "requirements.txt" ] && pip install -r requirements.txt || echo "requirements.txt not found"
+                    # Install dependencies globally (ensure Python & pip are installed)
+                    if [ -f requirements.txt ]; then
+                        pip3 install --upgrade pip
+                        pip3 install -r requirements.txt
+                    else
+                        echo "requirements.txt not found, skipping dependency install"
+                    fi
                 '''
             }
         }
@@ -36,10 +28,11 @@ pipeline {
             steps {
                 sh '''
                     echo "=== Test Stage ==="
-                    . venv/bin/activate
-
-                    # Run tests only if pytest is installed
-                    command -v pytest >/dev/null 2>&1 && pytest || echo "pytest not installed"
+                    if command -v pytest >/dev/null 2>&1; then
+                        pytest
+                    else
+                        echo "pytest not installed, skipping tests"
+                    fi
                 '''
             }
         }
@@ -48,15 +41,15 @@ pipeline {
             steps {
                 sh '''
                     echo "=== Deploy Stage ==="
+                    DEPLOY_DIR="/var/www/html/myapp"
 
-                    # Create deployment folder if missing
-                    mkdir -p /var/www/html/myapp
+                    # Make sure deploy folder exists
+                    if [ ! -d "$DEPLOY_DIR" ]; then
+                        mkdir -p "$DEPLOY_DIR"
+                    fi
 
-                    # Remove old files
-                    rm -rf /var/www/html/myapp/*
-
-                    # Copy project files (excluding venv)
-                    cp -r Jenkinsfile README.md about.html chatbot contact.html css index.html js projects.html /var/www/html/myapp/
+                    # Copy project files
+                    cp -r * "$DEPLOY_DIR/"
                 '''
             }
         }
@@ -64,7 +57,7 @@ pipeline {
 
     post {
         success {
-            echo '✅ Build, Test, Deploy succeeded!'
+            echo '✅ Build, Test, Deploy succeeded on Linux!'
         }
         failure {
             echo '❌ Build Failed! Check logs.'

@@ -13,13 +13,13 @@ pipeline {
                 sh '''
                     echo "=== Build Stage ==="
 
-                    # Create a virtual environment in the workspace
+                    # Create a virtual environment in workspace
                     python3 -m venv venv
 
                     # Activate virtual environment
-                    source venv/bin/activate
+                    . venv/bin/activate
 
-                    # Upgrade pip and install dependencies if requirements.txt exists
+                    # Upgrade pip and install dependencies inside venv
                     if [ -f requirements.txt ]; then
                         pip install --upgrade pip
                         pip install -r requirements.txt
@@ -36,7 +36,7 @@ pipeline {
                     echo "=== Test Stage ==="
 
                     # Activate virtual environment
-                    source venv/bin/activate
+                    . venv/bin/activate
 
                     if command -v pytest >/dev/null 2>&1; then
                         pytest
@@ -57,7 +57,7 @@ pipeline {
                     sudo mkdir -p "$DEPLOY_DIR"
                     sudo chown -R $USER:$USER "$DEPLOY_DIR"
 
-                    # Copy project files to deploy folder
+                    # Copy project files
                     cp -r * "$DEPLOY_DIR/"
                 '''
             }
@@ -65,3 +65,11 @@ pipeline {
     }
 
     post {
+        success {
+            echo '✅ Build, Test, Deploy succeeded on Linux!'
+        }
+        failure {
+            echo '❌ Build Failed! Check logs.'
+        }
+    }
+}

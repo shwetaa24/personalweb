@@ -4,9 +4,8 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Use the correct branch
                 checkout([$class: 'GitSCM',
-                    branches: [[name: '*/master']], // change to 'main' if your repo uses main
+                    branches: [[name: '*/master']], // or main
                     userRemoteConfigs: [[url: 'https://github.com/shwetaa24/personalweb.git']]
                 ])
             }
@@ -14,75 +13,60 @@ pipeline {
 
         stage('Build') {
             steps {
-                powershell '''
-                    Write-Host "=== Build Stage ==="
+                sh '''
+                    echo "=== Build Stage ==="
 
-                    # Remove old virtual environment if exists
-                    if (Test-Path .\\venv) {
-                        Write-Host "Removing existing venv..."
-                        Remove-Item -Recurse -Force .\\venv
-                    }
+                    # Remove existing venv
+                    if [ -d "venv" ]; then
+                        rm -rf venv
+                    fi
 
                     # Create virtual environment
-                    python -m venv venv
-                    if ($LASTEXITCODE -ne 0) { exit 1 }
-
-                    # Activate virtual environment
-                    .\\venv\\Scripts\\Activate.ps1
-                    if ($LASTEXITCODE -ne 0) { exit 1 }
+                    python3 -m venv venv
+                    source venv/bin/activate
 
                     # Upgrade pip
                     pip install --upgrade pip
-                    if ($LASTEXITCODE -ne 0) { exit 1 }
 
                     # Install requirements
-                    if (Test-Path .\\requirements.txt) {
-                        pip install -r .\\requirements.txt
-                        if ($LASTEXITCODE -ne 0) { exit 1 }
-                    } else {
-                        Write-Host "requirements.txt not found, skipping pip install"
-                    }
+                    if [ -f requirements.txt ]; then
+                        pip install -r requirements.txt
+                    else
+                        echo "requirements.txt not found, skipping pip install"
+                    fi
                 '''
             }
         }
 
         stage('Test') {
             steps {
-                powershell '''
-                    Write-Host "=== Test Stage ==="
+                sh '''
+                    echo "=== Test Stage ==="
+                    source venv/bin/activate
 
-                    # Activate virtual environment
-                    .\\venv\\Scripts\\Activate.ps1
-                    if ($LASTEXITCODE -ne 0) { exit 1 }
-
-                    # Run tests if pytest is installed
-                    if (Get-Command pytest -ErrorAction SilentlyContinue) {
+                    # Run tests if pytest installed
+                    if command -v pytest > /dev/null; then
                         pytest
-                        if ($LASTEXITCODE -ne 0) { exit 1 }
-                    } else {
-                        Write-Host "pytest not installed, skipping tests"
-                    }
+                    else
+                        echo "pytest not installed, skipping tests"
+                    fi
                 '''
             }
         }
 
         stage('Deploy') {
             steps {
-                powershell '''
-                    Write-Host "=== Deploy Stage ==="
+                sh '''
+                    echo "=== Deploy Stage ==="
+                    source venv/bin/activate
 
-                    # Activate virtual environment
-                    .\\venv\\Scripts\\Activate.ps1
-                    if ($LASTEXITCODE -ne 0) { exit 1 }
-
-                    # Deploy files to IIS or any target folder
-                    $deployPath = "C:\\inetpub\\wwwroot"
-                    if (Test-Path $deployPath) {
-                        Copy-Item -Path * -Destination $deployPath -Recurse -Force
-                        Write-Host "Deployment completed!"
-                    } else {
-                        Write-Host "Deployment folder not found, skipping deploy"
-                    }
+                    DEPLOY_PATH="/var/www/html"  # example path
+                    if [ -d "$DEPLOY_PATH" ]; then
+                        cp -r * "$DEPLOY_PATH"
+                        echo "Deployment completed!"
+                    else
+                        echo "Deployment folder not found, skipping deploy"
+                    fi
                 '''
             }
         }
@@ -90,10 +74,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ Build, Test, Deploy succeeded on Windows!'
+            echo '✅ Build, Test, Deploy succeeded on Linux!'
         }
         failure {
-            echo '❌ Build failed on Windows!'
+            echo '❌ Build failed on Linux!'
         }
     }
 }

@@ -1,57 +1,35 @@
 pipeline {
     agent any
-
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/shwetaa24/personalweb'
+                git url: 'https://github.com/shwetaa24/personalweb', branch: 'main', credentialsId: 'github-creds'
             }
         }
-
         stage('Build') {
             steps {
-                script {
-                    if (fileExists('package.json')) {
-                        sh 'npm install'
-                    } else {
-                        echo 'No build required for static files'
-                    }
-                }
+                echo 'No build required for static files'
             }
         }
-
         stage('Test') {
             steps {
-                script {
-                    if (fileExists('package.json')) {
-                        sh 'npm test || exit 1'
-                    } else {
-                        echo 'No tests defined'
-                    }
-                }
+                echo 'No tests defined'
             }
         }
-
         stage('Deploy') {
-    steps {
-        script {
-            // Clear old files
-            sh 'rm -rf /var/www/html/myapp/*'
-            // Copy new files
-            sh 'cp -r * /var/www/html/myapp/'
-            echo 'Deployment complete!'
+            steps {
+                sh 'mkdir -p /var/www/html/myapp'
+                sh 'rm -rf /var/www/html/myapp/*'
+                sh 'cp -r Jenkinsfile index.html script.js style.css /var/www/html/myapp/'
+            }
         }
     }
-}
-
-    }
-
     post {
         success {
-            echo "✅ Build & Deploy Successful!"
+            echo '✅ Build Succeeded!'
         }
         failure {
-            echo "❌ Build Failed! Check logs."
+            echo '❌ Build Failed! Check logs.'
         }
     }
 }

@@ -1,35 +1,66 @@
 pipeline {
     agent any
+
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/shwetaa24/personalweb', branch: 'main', credentialsId: 'github-creds'
+                git branch: 'main', url: 'https://github.com/shwetaa24/personalweb'
             }
         }
+
         stage('Build') {
             steps {
-                echo 'No build required for static files'
+                script {
+                    if (fileExists('package.json')) {
+                        sh 'npm install'
+                    } else {
+                        echo 'No build required for static files'
+                    }
+                }
             }
         }
+
         stage('Test') {
             steps {
-                echo 'No tests defined'
+                script {
+                    if (fileExists('package.json')) {
+                        sh 'npm test || exit 1'
+                    } else {
+                        echo 'No tests defined'
+                    }
+                }
             }
         }
+
         stage('Deploy') {
             steps {
-                sh 'mkdir -p /var/www/html/myapp'
-                sh 'rm -rf /var/www/html/myapp/*'
-                sh 'cp -r Jenkinsfile index.html script.js style.css /var/www/html/myapp/'
+                script {
+                    // Clear old files
+                    sh 'rm -rf /var/www/html/myapp/*'
+                    // Copy new files
+                    sh 'cp -r * /var/www/html/myapp/'
+                    echo 'Deployment complete!'
+                }
             }
         }
     }
+
     post {
         success {
-            echo '✅ Build Succeeded!'
+            echo "✅ Build & Deploy Successful!"
+            mail to: 'shwetajadhav2324@gmail.com',
+                 subject: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: """Good news!  
+The pipeline succeeded for ${env.JOB_NAME} #${env.BUILD_NUMBER}.  
+Check details: ${env.BUILD_URL}"""
         }
         failure {
-            echo '❌ Build Failed! Check logs.'
+            echo "❌ Build Failed! Check logs."
+            mail to: 'shwetajadhav2324@gmail.com',
+                 subject: "❌ FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: """Uh oh!  
+The pipeline failed for ${env.JOB_NAME} #${env.BUILD_NUMBER}.  
+Check logs: ${env.BUILD_URL}"""
         }
     }
 }
